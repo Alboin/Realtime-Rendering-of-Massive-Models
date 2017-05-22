@@ -1,43 +1,31 @@
-﻿  PLYDrawer.cpp
-PLYDrawer.cpp(17): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(165): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(181): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(189): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(205): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(231): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(256): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(258): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(272): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(273): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(286): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(293): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(296): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(306): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(314): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(406): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(413): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(416): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(420): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(422): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(442): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(463): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(467): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(487): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(526): warning C4018: '<': signed/unsigned mismatch
-PLYDrawer.cpp(548): warning C4018: '<': signed/unsigned mismatch
-  main.cpp
-main.cpp(170): warning C4305: 'argument': truncation from 'double' to 'GLclampf'
-main.cpp(232): warning C4018: '<': signed/unsigned mismatch
-main.cpp(235): warning C4018: '<': signed/unsigned mismatch
-main.cpp(297): warning C4018: '<': signed/unsigned mismatch
+﻿  main.cpp
+main.cpp(144): warning C4018: '<': signed/unsigned mismatch
+main.cpp(146): warning C4018: '<': signed/unsigned mismatch
+main.cpp(192): warning C4244: 'initializing': conversion from 'int' to 'float', possible loss of data
+main.cpp(217): warning C4305: 'argument': truncation from 'double' to 'GLclampf'
+main.cpp(231): warning C4018: '<': signed/unsigned mismatch
+main.cpp(234): warning C4018: '<': signed/unsigned mismatch
 main.cpp(299): warning C4018: '<': signed/unsigned mismatch
-main.cpp(457): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+main.cpp(301): warning C4018: '<': signed/unsigned mismatch
+main.cpp(336): warning C4244: '=': conversion from 'float' to 'int', possible loss of data
+main.cpp(403): warning C4018: '<': signed/unsigned mismatch
+main.cpp(410): warning C4018: '<': signed/unsigned mismatch
+main.cpp(412): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+main.cpp(416): warning C4018: '<': signed/unsigned mismatch
+main.cpp(421): warning C4244: 'argument': conversion from 'float' to 'unsigned int', possible loss of data
+main.cpp(438): warning C4018: '<': signed/unsigned mismatch
+main.cpp(441): warning C4244: 'argument': conversion from 'float' to 'unsigned int', possible loss of data
+main.cpp(551): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(568): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+main.cpp(569): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+main.cpp(578): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+main.cpp(643): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
 LINK : warning LNK4098: defaultlib 'LIBCMT' conflicts with use of other libs; use /NODEFAULTLIB:library
 LINK : warning LNK4098: defaultlib 'MSVCRTD' conflicts with use of other libs; use /NODEFAULTLIB:library
   Generating code
-  3 of 1437 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
+  1 of 1571 functions ( 0.1%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    1 functions had inline decision re-evaluated but remain unchanged
+    0 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
 shaderLoader.obj : warning LNK4049: locally defined symbol ___glewLinkProgram imported
 shaderLoader.obj : warning LNK4049: locally defined symbol ___glewDeleteShader imported

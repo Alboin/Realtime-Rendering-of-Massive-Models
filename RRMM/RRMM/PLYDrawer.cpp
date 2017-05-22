@@ -52,7 +52,7 @@ PLYDrawer::PLYDrawer(const PLYModel &ply, const int nLevelsOctree, int nLOD)
 
 	computeVerticeFaceRelation();
 
-	std::cout << "Model loaded!" << endl << endl;
+	std::cout << "Model loaded! " << vboArray.size() << " vertices." << endl << endl;
 
 	// Create an octree for the model.
 	std::cout << "Creating octree..." << endl;
@@ -71,9 +71,13 @@ PLYDrawer::PLYDrawer(const PLYModel &ply, const int nLevelsOctree, int nLOD)
 		allVBOs[i - 1] = vboOctree;
 		allIndexes[i - 1] = newIndexes;
 		createNewBuffers(copyVBO[i - 1], copyVAO[i - 1], copyEBO[i - 1], i - 1, true);
+
+		trianglesInLOD.push_back(allIndexes[i - 1].size());
 	}
 	std::cout << "Finished creating LOD's!" << endl << endl;
 	createNewBuffers(copyVBO[nLODs], copyVAO[nLODs], copyEBO[nLODs], nLODs, true);
+	trianglesInLOD.push_back(model.faceCount);
+	cout << "Original facecount: " << model.faceCount << endl;
 
 	vboOctree.clear();
 	newIndexes.clear();
@@ -154,6 +158,7 @@ void PLYDrawer::drawPlyModel(GLuint shaderProgramID, int LOD)
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
+
 }
 
 
@@ -232,7 +237,7 @@ void PLYDrawer::deleteOctree(Node *node)
 	{
 		deleteOctree(node->children[i]);
 	}
-	if (node->children.size() == 0)
+	//if (node->children.size() == 0)
 		delete node;
 }
 

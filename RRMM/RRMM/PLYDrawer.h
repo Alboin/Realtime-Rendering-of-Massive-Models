@@ -50,6 +50,8 @@ public:
 	int octreeLevels; //set from main.cpp
 	void deleteOctree(Node* node);
 
+	vector<uint> trianglesInLOD;
+
 	int nOctreeFaces, nOriginalFaces, nLODs;
 private:
 	vector<glm::vec3> vboArray;
