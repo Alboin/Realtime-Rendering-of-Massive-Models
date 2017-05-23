@@ -88,6 +88,8 @@ PLYDrawer::PLYDrawer(const PLYModel &ply, const int nLevelsOctree, int nLOD)
 
 void PLYDrawer::createNewBuffers(GLuint &VBO, GLuint &VAO, GLuint &EBO, int LOD, bool createForOctree)
 {
+	// Create buffers with the given LOD.
+
 	if (LOD >= nLODs)
 		createForOctree = false;
 
@@ -131,6 +133,8 @@ void PLYDrawer::createNewBuffers(GLuint &VBO, GLuint &VAO, GLuint &EBO, int LOD,
 
 void PLYDrawer::drawPlyModel(GLuint shaderProgramID, int LOD)
 {
+	// Draw our model with the given LOD.
+
 	bool renderOctree = true;
 	if (LOD >= nLODs)
 	{
@@ -237,8 +241,7 @@ void PLYDrawer::deleteOctree(Node *node)
 	{
 		deleteOctree(node->children[i]);
 	}
-	//if (node->children.size() == 0)
-		delete node;
+	delete node;
 }
 
 
@@ -348,7 +351,6 @@ void PLYDrawer::chooseLOD(int LOD)
 
 		
 
-		//M /= connectedTriangles.size();
 
 		// Make some adjustments to the M-matrix before the inverse.
 		M(3, 0) = 0.0f;
@@ -362,7 +364,6 @@ void PLYDrawer::chooseLOD(int LOD)
 		M(1, 3) += -averagePosition.y;
 		M(2, 3) += -averagePosition.z;
 
-		//cout << endl << M << endl;
 
 		Eigen::Matrix4f A;
 		bool inverseOK;

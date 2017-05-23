@@ -22,7 +22,7 @@ struct Node {
 	vector<Node*> children;
 	// A list with indexes to all the vertices in this cell.
 	vector<uint> vertices;
-	//vec3 maxBorder, minBorder;
+
 	vec3 centroid;
 	float radius;
 };
@@ -32,13 +32,11 @@ class PLYDrawer
 public:
 	PLYDrawer(const PLYModel &ply, const int nLevelsOctree, int nLOD);
 	~PLYDrawer();
-
 	void drawPlyModel(GLuint shaderProgramID, int LOD);
 	void computeNormals();
-
 	void chooseLOD(int LOD);
-
 	void createNewBuffers(GLuint &VBO, GLuint &VAO, GLuint &EBO, int LOD, bool createForOctree = false);
+	void deleteOctree(Node* node);
 
 	float width, height, depth;
 	// A vec3 containing the smallest x,y & z-positions of all the vertices.
@@ -48,11 +46,12 @@ public:
 
 	Node *octreeRoot;
 	int octreeLevels; //set from main.cpp
-	void deleteOctree(Node* node);
 
+	// Number of triangles in each of the LODs.
 	vector<uint> trianglesInLOD;
-
+	
 	int nOctreeFaces, nOriginalFaces, nLODs;
+
 private:
 	vector<glm::vec3> vboArray;
 	vector<glm::vec3> vboOctree;
@@ -68,9 +67,9 @@ private:
 	void createOctree(int maxDepth);
 	void createOctree(int remainingDepth, Node* node);
 	void getVertexIDs(Node* node, int position, vector<vector<uint> > &ids);
-
 	void computeVerticeFaceRelation();
 
+	// Vectors with the buffers for each LOD.
 	vector<GLuint> copyVBO, copyVAO, copyEBO;
 };
 

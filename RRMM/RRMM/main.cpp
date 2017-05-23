@@ -26,18 +26,15 @@ using namespace std;
 // Global variables
 mat4 view;
 GLFWwindow* window;
-bool leftMousePressed = false;
 vec3 position = vec3(-2.0f, 0.2f, -2.0f);
 bool exitProgram = false;
 int windowWidth = 1200;
 int windowHeight = 800;
 float horizontalAngle = -90, verticalAngle = 0;
 int wireframe = 0;
-double mouseX, mouseY;
 int octreeLevels = 15;
 int numberOfLODs = 3;
 int LOD = numberOfLODs - 1;
-bool freezeLODs = false;
 
 //Some global variables for the fps-counter
 double t0 = 0.0;
@@ -46,8 +43,6 @@ char titlestring[250];
 
 // Function declaration
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
-static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void updateView();
 map<pair<int, int>, set<pair<int, int>>> loadVisibilityFile();
@@ -104,15 +99,16 @@ int main()
 
 	//Register external intpu in GLFW
 	glfwSetKeyCallback(window, key_callback);
-	glfwSetCursorPosCallback(window, cursor_position_callback);
-	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	glfwSetScrollCallback(window, scroll_callback);
 	#pragma endregion
 
 	#pragma region Read museum layout-file.
 	vector<vector<uint> > museumLayout;
 	ifstream inputFile;
-	inputFile.open("museum2.txt");
+	string inputName;
+	cout << "Please enter name of museum layout-file to use: ";
+	cin >> inputName;
+	inputFile.open(inputName);
 
 	if (inputFile.is_open())
 	{
@@ -136,12 +132,9 @@ int main()
 
 	#pragma region Create lists to handle model benefits and LODs.
 	// Create list with a benefit-entry for each model to be rendered, also a list with LOD for each model.
-	vector<float> modelBenefits;
 	vector<float> modelNextLODBenefits;
 	vector<float> modelLODs;
 	vector<int> modelTriangleIncrease;
-	vector<int> sortedBenefits;
-	vector<int> sortedNextLODBenefits;
 	vector<float> modelDiagonals;
 	vector<float> modelDistances;
 	vector<int> whichMesh;
@@ -160,12 +153,9 @@ int main()
 			}
 			else if (museumLayout[i][j] > 2)
 			{
-				modelBenefits.push_back(0);
 				modelNextLODBenefits.push_back(1);
 				modelLODs.push_back(0); // All models start with the lowest LOD.
 				modelTriangleIncrease.push_back(1);
-				sortedBenefits.push_back(k); //A list with model indexes, to be sorted by model benefit.
-				sortedNextLODBenefits.push_back(k);
 				willBeRendered.push_back(true);
 
 				modelDiagonals.push_back(0);
@@ -199,7 +189,6 @@ int main()
 	float startingFPS = desiredFPS;
 	int trianglesPerSecond = 1;
 	float maxCost = -1;
-	float currentCost = 1;
 	double deltaTime = 1;
 	bool firstSecond = true;
 
@@ -214,7 +203,6 @@ int main()
 		//Checks if any events are triggered (like keyboard or mouse events)
 		glfwPollEvents();
 		//Update mouse position
-		glfwGetCursorPos(window, &mouseX, &mouseY);
 		updateView();
 
 		//Set the lightPos to be the same as the camera position.
@@ -231,6 +219,7 @@ int main()
 		else if (wireframe == 2)
 			glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
 
+		// Reset the triangle-count for each frame.
 		int totalTrianglesRendered = 0;
 
 		// Determine player cell position.
@@ -242,7 +231,6 @@ int main()
 		#pragma region Cube-rendering
 		for (int i = 0; i < museumLayout.size(); i++)
 		{
-			//int control_j = 0;
 			for (int j = 0; j < museumLayout[i].size(); j++)
 			{
 				// Check if the wall/floor-cell is visible from current cell.
@@ -266,18 +254,10 @@ int main()
 					model = glm::scale(model, vec3(1, 3, 1));
 					model = glm::translate(model, vec3(xPos, 0, zPos));
 				}
-				//Draw floor and ceiling.
+				//Draw floor.
 				else
 				{
-					//if (j == control_j)
-					//{
-						model = glm::translate(model, vec3(xPos, -1, zPos));
-					//}
-					//else
-					//{
-					//	//model = glm::translate(model, vec3(xPos, 1, zPos));
-					//	control_j = j;
-					//}
+					model = glm::translate(model, vec3(xPos, -1, zPos));
 				}
 
 				#pragma region Cube MVP-matrix
@@ -303,10 +283,6 @@ int main()
 				#pragma endregion
 
 				cube.drawCube(shaderProgramID);
-
-				//if (isFloor)
-				//	j--;
-				//control_j++;
 				
 			}
 		}
@@ -330,7 +306,6 @@ int main()
 				else if (museumLayout[i][j] == 4)
 					modelPointer = model[1];
 				else if (museumLayout[i][j] == 5)
-					//continue;
 					modelPointer = model[2];
 				else
 					continue;
@@ -426,7 +401,7 @@ int main()
 			// Calculate the benefits for all models.
 			for (int i = 0; i < modelNextLODBenefits.size(); i++)
 				//modelNextLODBenefits[i] = (pow(2, (float(LOD + 1) / float(numberOfLODs) * octreeLevels)) * modelDistances[i]) / modelDiagonals[i];
-				// Inverted function works for some reason.
+				// Inverted function works for some reason instead of the above, which gives high LOD's to objects far away...
 				modelNextLODBenefits[i] = modelDiagonals[i] / (pow(2, (float(LOD + 1) / float(numberOfLODs) * octreeLevels)) * modelDistances[i]);
 
 			int indexWithLargestQuantity = 0;
@@ -463,7 +438,7 @@ int main()
 			//Calculate the current number of triangles rendered.
 			for (int i = 0; i < modelLODs.size(); i++)
 			{
-				//cout << modelLODs[i] << "/" << numberOfLODs << endl;
+				// But only if the model will actually be rendered.
 				if(willBeRendered[i])
 					triangleBudget += model[whichMesh[i]]->trianglesInLOD[modelLODs[i]];
 
@@ -471,101 +446,6 @@ int main()
 
 		}
 		#pragma endregion
-
-		//NOT USED AT THE MOMENT
-		#pragma region Sorting of benefit-list for models.
-		// Sort models after benefit, from lowest to highest.
-		/*for (int i = 1; i < sortedBenefits.size(); i++)
-		{
-			int j = i - 1;
-			int index = sortedBenefits[i];
-
-			while (j >= 0 && modelBenefits[sortedBenefits[j]] < modelBenefits[index])
-			{
-				sortedBenefits[j + 1] = sortedBenefits[j];
-				j = j - 1;
-			}
-			sortedBenefits[j + 1] = index;
-		}
-
-		// Sort models after the benefit that next LOD would yield, from highest to lowest.
-		for (int i = 1; i < sortedNextLODBenefits.size(); i++)
-		{
-			int j = i - 1;
-			int index = sortedNextLODBenefits[i];
-
-			while (j >= 0 && modelNextLODBenefits[sortedNextLODBenefits[j]] > modelNextLODBenefits[index])
-			{
-				sortedNextLODBenefits[j + 1] = sortedNextLODBenefits[j];
-				j = j - 1;
-			}
-			sortedNextLODBenefits[j + 1] = index;
-		}
-		#pragma endregion
-
-
-
-		//not used at the moment
-		#pragma region Increase/decrease LODs of models if possible/needed.
-		/*
-		if (!freezeLODs)
-		{
-			// Lower the LOD if needed.
-			if (currentCost > maxCost)
-			{
-				// Try to lower the model with least benefit if possible.
-				for (int i = 0; i < sortedBenefits.size(); i++)
-					if (modelLODs[sortedBenefits[i]] > 0)
-					{
-						modelLODs[sortedBenefits[i]]--;
-						cout << "Lowering LOD!" << endl;
-						break;
-					}
-			}
-			// Higher the LOD if possible.
-			else
-			{
-				for (int i = 0; i < sortedNextLODBenefits.size(); i++)
-				{
-					//If the model already has the highest LOD, move on.
-					if (modelLODs[sortedNextLODBenefits[i]] == numberOfLODs)
-						continue;
-
-					// Compute what the cost of increasing the LOD of this model would be.
-					int increase = modelTriangleIncrease[sortedNextLODBenefits[i]];
-
-
-					//float trianglesPerSecond_nextLOD = (totalTrianglesRendered + increase) / (1.0f / desiredFPS);
-					
-					// Compute how many triangles the program is able to compute per frame and still be within the limits.
-					float trianglesPerFrame = trianglesPerSecond / desiredFPS;
-					
-					float predictedFPS = 1.0f / (((totalTrianglesRendered + increase) / trianglesPerFrame) * fps);
-
-					float currentCost_nextLOD = trianglesPerSecond / predictedFPS;
-
-					cout << "Current: " << fps << ", Predicted: " << predictedFPS << endl;
-					//cout << "Triangles/frame: " << trianglesPerFrame << ", Triangles/second: " << trianglesPerSecond << ", starting fps: " << startingFPS << endl;
-					//cout << "Triangles this frame: " << totalTrianglesRendered << ", with increase: " << totalTrianglesRendered + increase << endl << endl;
-
-
-
-					// Increase the LOD of the model if the cost is ok and it doesn't already have the highest LOD.
-					if(totalTrianglesRendered + increase < trianglesPerFrame * 0.9f && modelLODs[sortedNextLODBenefits[i]] < numberOfLODs)
-					//if (predictedFPS < desiredFPS && modelLODs[sortedNextLODBenefits[i]] < numberOfLODs)
-					//if (currentCost_nextLOD < maxCost && modelLODs[sortedNextLODBenefits[i]] < numberOfLODs)
-					{
-						modelLODs[sortedNextLODBenefits[i]]++;
-						cout << "Increasing LOD!" << endl;
-						break;
-					}
-				}
-
-			}
-		}
-		*/
-		#pragma endregion
-		
 
 		//Swap the buffers
 		glfwSwapBuffers(window);
@@ -601,14 +481,13 @@ int main()
 			trianglesPerSecond += totalTrianglesRendered;
 		}
 
-		// Compute current cost.
-		currentCost = trianglesPerSecond / fps;
 
 	}
 
 	glfwTerminate();
-	//delete model1;
-	//delete model2;
+	delete model[0];
+	delete model[1];
+	delete model[2];
 
 	return 0;
 }
@@ -616,20 +495,6 @@ int main()
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
-
-	if (key == GLFW_KEY_ENTER && action == GLFW_PRESS)
-	{
-		if (freezeLODs)
-		{
-			freezeLODs = false;
-			cout << "Unfreezing LODs" << endl;
-		}
-		else
-		{
-			freezeLODs = true;
-			cout << "Freezing LODs" << endl;
-		}
-	}
 
 	if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
 	{
@@ -644,39 +509,12 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 }
 
-static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
-{
-	if (leftMousePressed)
-	{
-		//Rotate around Y-axis
-		view = rotate(view, (float)(xpos - mouseX) / 100, vec3(0.0f, 1.0f, 0.0f));
-
-		//Rotate around up/down
-		mat3 rotMat(view);
-		vec3 transl(view[3]);
-		vec3 camera_pos = -transl * rotMat;
-
-		camera_pos = vec3(camera_pos.x, 0.0f, camera_pos.z);
-		vec3 temp = normalize(cross(vec3(0.0f, 1.0f, 0.0f), camera_pos));
-		view = rotate(view, (float)(ypos - mouseY) / 150, temp);
-	}
-
-
-}
-
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	//Zoom in and out through scrolling
 	view = scale(view, vec3(1.0 + 0.1*yoffset));
 }
 
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
-{
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-		leftMousePressed = true;
-	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
-		leftMousePressed = false;
-}
 
 void updateView()
 {

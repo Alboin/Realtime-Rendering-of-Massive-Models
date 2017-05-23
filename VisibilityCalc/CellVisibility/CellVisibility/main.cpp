@@ -36,7 +36,10 @@ int main()
 	// Write the calculated visibility to a file.
 	writeFile(visibility, "visibility.txt");
 
-	cout << "Done!" << endl;
+	cout << "Done! You can close this window now :)" << endl;
+
+	int dummy;
+	cin >> dummy;
 
 	return 0;
 }
@@ -122,6 +125,8 @@ map<pair<int,int>, set<pair<int,int>>> calculateVisibility(const vector<vector<i
 		float stepSize = 0.001f;
 		float maxSteps = sqrt(pow(layout.size(), 2) + pow(layout[0].size(), 2)) / stepSize;
 
+		bool changeWasMade = false;
+
 		for (int step = 0; step < maxSteps; step++)
 		{
 			glm::vec2 tracePosition = startPos + directionVector * (step * stepSize);
@@ -134,21 +139,32 @@ map<pair<int,int>, set<pair<int,int>>> calculateVisibility(const vector<vector<i
 			if (traceCell_x >= layout[0].size() || traceCell_y >= layout.size() || traceCell_x < 0 || traceCell_y < 0)
 				break;
 
-			// Add the traced cell to list of visible cells.
-			visibility[make_pair(cell_x, cell_y)].insert(make_pair(traceCell_x, traceCell_y));
-			visibility[make_pair(traceCell_x, traceCell_y)].insert(make_pair(cell_x, cell_y));
+			// Try to add the traced cell to list of visible cells.
+			pair<set<pair<int, int>>::iterator, bool> insertion1 = visibility[make_pair(cell_x, cell_y)].insert(make_pair(traceCell_x, traceCell_y));
+			pair<set<pair<int, int>>::iterator, bool> insertion2 = visibility[make_pair(traceCell_x, traceCell_y)].insert(make_pair(cell_x, cell_y));
+
+			// If an insertion was made, make sure that the "iterationsSinceLastChange" is set to 0 further on.
+			if (insertion1.second || insertion2.second)
+				changeWasMade = true;
 
 			// Check if the traced cell is an occluder.
 			if (layout[traceCell_y][traceCell_x] == 2)
 			{
 				// Stop the tracing of this ray.
-				iterationsSinceLastChange++;
 				break;
 			}
 		}
+
+		if (!changeWasMade)
+			iterationsSinceLastChange++;
+		else
+			iterationsSinceLastChange = 0;
 		
-		if(iterations % 10000 == 0)
-			cout << iterations << "/1000000 iterations, (" << ((float)iterations/ 1000000.0f) * 100 << "%) , size of map: " << visibility.size() << endl;
+		if (iterations % 10000 == 0)
+		{
+			cout << iterations << "/1000000 iterations, (" << ((float)iterations / 1000000.0f) * 100 << "%) , size of map: " << visibility.size() << endl;
+			cout << "Iterations since last change: " << iterationsSinceLastChange << " (will stop iterating if 100 000 is reached)" << endl << endl;
+		}
 		iterations++;
 	}
 
