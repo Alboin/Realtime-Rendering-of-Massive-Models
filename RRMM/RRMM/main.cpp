@@ -5,6 +5,7 @@
 #include <string>
 #include <math.h>
 #include <algorithm>
+#include <map>
 
 #define GLEW_STATIC
 #include <GL/glew.h>
@@ -49,6 +50,7 @@ static void cursor_position_callback(GLFWwindow* window, double xpos, double ypo
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void updateView();
+map<pair<int, int>, set<pair<int, int>>> loadVisibilityFile();
 
 
 int main()
@@ -129,6 +131,9 @@ int main()
 	}
 	#pragma endregion
 
+	// Read the precomputed visibility-information for all the cells.
+	map<pair<int, int>, set<pair<int, int>>> visibility = loadVisibilityFile();
+
 	#pragma region Create lists to handle model benefits and LODs.
 	// Create list with a benefit-entry for each model to be rendered, also a list with LOD for each model.
 	vector<float> modelBenefits;
@@ -140,6 +145,7 @@ int main()
 	vector<float> modelDiagonals;
 	vector<float> modelDistances;
 	vector<int> whichMesh;
+	vector<bool> willBeRendered;
 	int k = 0;
 	for (int i = 0; i < museumLayout.size(); i++)
 	{
@@ -148,8 +154,8 @@ int main()
 			//Set starting position.
 			if (museumLayout[i][j] == 6)
 			{
-				float xPos = museumLayout.size() * (float(i) / float(museumLayout.size())) - museumLayout.size() / 2.0f;
-				float zPos = museumLayout[i].size() * (float(j) / float(museumLayout[i].size())) - museumLayout[i].size() / 2.0f;
+				float xPos =  j - museumLayout.size() / 2.0f;
+				float zPos =  i - museumLayout[i].size() / 2.0f;
 				position = vec3(xPos, 0.2f, zPos);
 			}
 			else if (museumLayout[i][j] > 2)
@@ -160,6 +166,7 @@ int main()
 				modelTriangleIncrease.push_back(1);
 				sortedBenefits.push_back(k); //A list with model indexes, to be sorted by model benefit.
 				sortedNextLODBenefits.push_back(k);
+				willBeRendered.push_back(true);
 
 				modelDiagonals.push_back(0);
 				modelDistances.push_back(0);
@@ -181,7 +188,7 @@ int main()
 	PLYDrawer *model[3];
 	model[0] = new PLYDrawer(PLYModel("models/bunny.ply", false, false), octreeLevels, numberOfLODs);
 	model[1] = new PLYDrawer(PLYModel("models/Armadillo.ply", false, false), octreeLevels, numberOfLODs);
-	//model[2] = new PLYDrawer(PLYModel("models/dragon.ply", false, false), octreeLevels, numberOfLODs);
+	model[2] = new PLYDrawer(PLYModel("models/happy.ply", false, false), octreeLevels, numberOfLODs);
 
 	Cube cube = Cube();
 
@@ -226,15 +233,28 @@ int main()
 
 		int totalTrianglesRendered = 0;
 
+		// Determine player cell position.
+		int cell_x = position.x + museumLayout[0].size() / 2.0f + 0.5f;
+		int cell_y = position.z + museumLayout.size() / 2.0f + 0.5f;
+
+
 		// Render museum layout
 		#pragma region Cube-rendering
 		for (int i = 0; i < museumLayout.size(); i++)
 		{
-			int control_j = 0;
+			//int control_j = 0;
 			for (int j = 0; j < museumLayout[i].size(); j++)
 			{
-				float xPos = museumLayout.size() * (float(i) / float(museumLayout.size())) - museumLayout.size() / 2.0f;
-				float zPos = museumLayout[i].size() * (float(j) / float(museumLayout[i].size())) - museumLayout[i].size() / 2.0f;
+				// Check if the wall/floor-cell is visible from current cell.
+				set<pair<int, int>>::iterator it = visibility[make_pair(cell_x, cell_y)].find(make_pair(j, i));
+
+				// If it's not visible, skip to the next cube!
+				if (it == visibility[make_pair(cell_x, cell_y)].end())
+					continue;
+
+
+				float xPos =  j - museumLayout[i].size() / 2.0f;
+				float zPos = i - museumLayout.size() / 2.0f;
 
 				//Create model matrix
 				glm::mat4 model(1.0f);
@@ -249,15 +269,15 @@ int main()
 				//Draw floor and ceiling.
 				else
 				{
-					if (j == control_j)
-					{
+					//if (j == control_j)
+					//{
 						model = glm::translate(model, vec3(xPos, -1, zPos));
-					}
-					else
-					{
-						//model = glm::translate(model, vec3(xPos, 1, zPos));
-						control_j = j;
-					}
+					//}
+					//else
+					//{
+					//	//model = glm::translate(model, vec3(xPos, 1, zPos));
+					//	control_j = j;
+					//}
 				}
 
 				#pragma region Cube MVP-matrix
@@ -284,9 +304,9 @@ int main()
 
 				cube.drawCube(shaderProgramID);
 
-				if (isFloor)
-					j--;
-				control_j++;
+				//if (isFloor)
+				//	j--;
+				//control_j++;
 				
 			}
 		}
@@ -300,8 +320,9 @@ int main()
 		{
 			for (int j = 0; j < museumLayout[i].size(); j++)
 			{
-				float xPos = museumLayout.size() * (float(i) / float(museumLayout.size())) - museumLayout.size() / 2.0f;
-				float zPos = museumLayout[i].size() * (float(j) / float(museumLayout[i].size())) - museumLayout[i].size() / 2.0f;
+
+				float xPos = j - museumLayout[i].size() / 2.0f;
+				float zPos = i - museumLayout.size() / 2.0f;
 
 				PLYDrawer *modelPointer;
 				if (museumLayout[i][j] == 3)
@@ -309,10 +330,23 @@ int main()
 				else if (museumLayout[i][j] == 4)
 					modelPointer = model[1];
 				else if (museumLayout[i][j] == 5)
-					continue;
-					//modelPointer = model[2];
+					//continue;
+					modelPointer = model[2];
 				else
 					continue;
+
+				// Check if the model is visible from current cell.
+				set<pair<int, int>>::iterator it = visibility[make_pair(cell_x, cell_y)].find(make_pair(j, i));
+
+				// If it's not visible, skip to the next model!
+				if (it == visibility[make_pair(cell_x, cell_y)].end())
+				{
+					willBeRendered[k] = false;
+					k++;
+					continue;
+				}
+
+				willBeRendered[k] = true;
 
 				#pragma region Model MVP-matrix
 				//Create model matrix
@@ -372,7 +406,8 @@ int main()
 				// Draw model.
 				modelPointer->drawPlyModel(shaderProgramID, LOD);
 
-				totalTrianglesRendered += modelPointer->trianglesInLOD[LOD];
+				if(willBeRendered[k - 1])
+					totalTrianglesRendered += modelPointer->trianglesInLOD[LOD];
 
 			}
 		}
@@ -399,8 +434,8 @@ int main()
 			for (int i = 0; i < modelLODs.size(); i++)
 			{
 				float quantity = -1;
-				// Make sure that the model does not already have the highest LOD.
-				if (modelLODs[i] < numberOfLODs)
+				// Make sure that the model does not already have the highest LOD (and also that the model will actually be rendered).
+				if (modelLODs[i] < numberOfLODs && willBeRendered[i])
 					quantity = modelNextLODBenefits[i] / model[whichMesh[i]]->trianglesInLOD[modelLODs[i] + 1];
 
 				if (quantity > largestQuantity)
@@ -412,7 +447,15 @@ int main()
 
 			// Increase the LOD of the model with the largest quantity.
 			if (largestQuantity > 0)
-				modelLODs[indexWithLargestQuantity]++;
+			{
+				int current = model[whichMesh[indexWithLargestQuantity]]->trianglesInLOD[modelLODs[indexWithLargestQuantity]];
+				int next = model[whichMesh[indexWithLargestQuantity]]->trianglesInLOD[modelLODs[indexWithLargestQuantity] + 1];
+				// Make sure that increasing the LOD won't break the maxCost limit.
+				if(triangleBudget + next - current < maxCost)
+					modelLODs[indexWithLargestQuantity]++;
+				else
+					break;
+			}
 			else
 				break;
 
@@ -421,7 +464,8 @@ int main()
 			for (int i = 0; i < modelLODs.size(); i++)
 			{
 				//cout << modelLODs[i] << "/" << numberOfLODs << endl;
-				triangleBudget += model[whichMesh[i]]->trianglesInLOD[modelLODs[i]];
+				if(willBeRendered[i])
+					triangleBudget += model[whichMesh[i]]->trianglesInLOD[modelLODs[i]];
 
 			}
 
@@ -697,5 +741,58 @@ void updateView()
 	// Reset mouse position for next frame
 	glfwSetCursorPos(window, windowWidth / 2, windowHeight / 2);
 
+
+}
+
+map<pair<int, int>, set<pair<int, int>>> loadVisibilityFile()
+{
+	cout << endl << "Reading file with visibility-information..." << endl;
+
+	ifstream inputFile;
+	inputFile.open("visibility.txt");
+
+	map<pair<int, int>, set<pair<int, int>>> visibility;
+
+	if (inputFile.is_open())
+	{
+		// Go through the file until the end.
+		while (!inputFile.eof())
+		{
+			// First two numbers is the cell we're in.
+			int x_pos;
+			int y_pos;
+
+			inputFile >> x_pos;
+			inputFile >> y_pos;
+
+			// Then all visible cells. A -1 marks the end of one line.
+			int visible_x;
+			int visible_y;
+
+			while (!inputFile.eof())
+			{
+				inputFile >> visible_x;
+
+				// If the end of the line has been reached, break the loop.
+				if (visible_x == -1)
+					break;
+
+				inputFile >> visible_y;
+
+				// Add the visible cell to the set coupled with the cell we're in.
+				visibility[make_pair(x_pos, y_pos)].insert(make_pair(visible_x, visible_y));
+			}
+		}
+		inputFile.close();
+		cout << "Visibility information read!" << endl;
+
+	}
+	else
+	{
+		cout << "ERROR: Could not open file with visibility information!!! ('visibility.txt')" << endl;
+	}
+
+
+	return visibility;
 
 }

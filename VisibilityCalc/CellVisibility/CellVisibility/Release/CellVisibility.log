@@ -1,0 +1,10 @@
+﻿  main.cpp
+main.cpp(123): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+main.cpp(134): warning C4018: '>=': signed/unsigned mismatch
+  Generating code
+  10 of 715 functions ( 1.4%) were compiled, the rest were copied from previous compilation.
+    3 functions were new in current compilation
+    22 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  CellVisibility.vcxproj -> C:\Users\Albin\Documents\GitHub\Realtime-Rendering-of-Massive-Models\VisibilityCalc\CellVisibility\Release\CellVisibility.exe
+  CellVisibility.vcxproj -> C:\Users\Albin\Documents\GitHub\Realtime-Rendering-of-Massive-Models\VisibilityCalc\CellVisibility\Release\CellVisibility.pdb (Full PDB)
